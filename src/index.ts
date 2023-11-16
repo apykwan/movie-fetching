@@ -1,28 +1,9 @@
 import axios from 'axios';
 
-import { debounce } from './utils';
+import createAutoComplete from './autocomplete';
+import { movieObj, movieDetailObj } from './types';
 
-type movieObj = {
-  Title: string;
-  Year: string;
-  imdbID: string;
-  Type: string;
-  Poster: string;
-}
-
-type movieDetailObj = {
-  Title: string;
-  Genre: string;
-  Plot: string;
-  Poster: string;
-  Awards: string;
-  BoxOffice: string;
-  Metascore: string;
-  imdbRating: string;
-  imdbVotes: string;
-}
-
-const fetchData = async (searchTerm: string):Promise<[movieObj] | []> => {
+export const fetchData = async (searchTerm: string):Promise<[movieObj] | []> => {
   const response = await axios.get('http://www.omdbapi.com/', {
     params: {
       apikey: '165c1035',
@@ -35,64 +16,21 @@ const fetchData = async (searchTerm: string):Promise<[movieObj] | []> => {
   return response.data.Search;
 };
 
-const root = document.querySelector('.autocomplete') as HTMLElement;
-root.innerHTML = `
-  <label><b>Search For a Movie</b></label>
-  <input class="input" />
-  <div class="dropdown">
-    <div class="dropdown-menu">
-      <div class="dropdown-content results"></div>
-    </div>
-  </div>
-`;
-
-const input = document.querySelector('input') as HTMLInputElement;
-const dropdown = document.querySelector('.dropdown') as HTMLElement;
-const resultsWrapper = document.querySelector('.results') as HTMLElement;
-
-const onInput = async (event: { target: HTMLInputElement}) => {
-  const movies: [movieObj] | [] = await fetchData((event.target.value));
-
-  if (!movies.length) {
-    dropdown.classList.remove('is-active');
-    return;
-  }
-
-  resultsWrapper.innerHTML = '';
-  dropdown.classList.add('is-active');
-  for (let movie of movies) {
-    const option: HTMLElement = document.createElement('a');
+createAutoComplete({
+  root: document.querySelector('.autocomplete') as HTMLElement,
+  rederOption(movie: movieObj): string {
     const imgSrc: string | null = movie.Poster === 'N/A' ? '' : movie.Poster;
-
-    option.classList.add('dropdown-item');
-    option.innerHTML = `
+    return `
       <img src="${imgSrc}" />
-      ${movie.Title}
+      ${movie.Title} (${movie.Year})
     `;
-
-    option.addEventListener('click', () => {
-      dropdown.classList.remove('is-active');
-      input.value = movie.Title;
-      onMovieSelect(movie)
-
-    });
-
-    resultsWrapper.appendChild(option);
+  },
+  onOptionSelect(movie: movieObj): void {
+    onMovieSelect(movie)
   }
-};
-
-input?.addEventListener('input', debounce(onInput, 500));
-
-document.addEventListener('click', event => {
-  if (!root.contains(<Node>(event.target))) {
-    dropdown.classList.remove('is-active');
-  } 
-  // else if (document.querySelectorAll(".dropdown-item").length > 0) {
-  //   dropdown.classList.add('is-active');
-  // }
 });
 
-const onMovieSelect = async (movie: movieObj): Promise<void> => {
+export const onMovieSelect = async (movie: movieObj): Promise<void> => {
   const response = await axios.get('http://www.omdbapi.com/', {
     params: {
       apikey: '165c1035',
@@ -103,9 +41,6 @@ const onMovieSelect = async (movie: movieObj): Promise<void> => {
   const summaryEl = document.querySelector('#summary') as HTMLElement;
   summaryEl.innerHTML = movieTemplate(response.data as movieDetailObj);
 };
-
-// AUTOCOMPLETE #2
-
 
 const movieTemplate = (movieDetail: movieDetailObj): string => {
   return `
