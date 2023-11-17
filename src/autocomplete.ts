@@ -1,12 +1,12 @@
 import { debounce } from './utils';
 import { movieObj, rootObj } from './types';
-import { fetchData } from './index';
 
 const createAutoComplete = ({ 
     root, 
     rederOption, 
     onOptionSelect, 
-    inputValue 
+    inputValue,
+    fetchData 
 }: rootObj): void => {
   root.innerHTML = `
     <label><b>Search For a Movie</b></label>
@@ -23,25 +23,25 @@ const createAutoComplete = ({
   const resultsWrapper = root.querySelector('.results') as HTMLElement;
 
   const onInput = async (event: { target: HTMLInputElement}) => {
-    const movies: [movieObj] | [] = await fetchData((event.target.value));
+    const items: [movieObj] | [] = await fetchData((event.target.value));
 
-    if (!movies.length) {
+    if (!items.length) {
       dropdown.classList.remove('is-active');
       return;
     }
 
     resultsWrapper.innerHTML = '';
     dropdown.classList.add('is-active');
-    for (let movie of movies) {
+    for (let item of items) {
       const option = document.createElement('a') as HTMLElement;
       
       option.classList.add('dropdown-item');
-      option.innerHTML = rederOption(movie as movieObj);
+      option.innerHTML = rederOption(item);
 
       option.addEventListener('click', () => {
         dropdown.classList.remove('is-active');
-        input.value = inputValue(movie);
-        onOptionSelect(movie);
+        input.value = inputValue(item);
+        onOptionSelect(item);
       });
 
       resultsWrapper.appendChild(option);

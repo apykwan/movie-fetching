@@ -18,9 +18,13 @@ export type movieDetailObj = {
   imdbVotes: string;
 }
 
-export type rootObj = {
-  root: HTMLElement;
+export interface autoCompleteObj {
   rederOption: <T extends movieObj>(obj: T) => string;
-  onOptionSelect: <T extends movieObj>(obj: T) => void;
   inputValue: <T extends movieObj>(obj: T) => string;
+  fetchData: (arg: string) => Promise<[movieObj] | []>;  
+}
+
+export interface rootObj extends autoCompleteObj {
+  root: HTMLElement;
+  onOptionSelect: <T extends movieObj>(obj: T) => void;
 }
